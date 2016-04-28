@@ -55,14 +55,14 @@ class Index {
 		);
 
 		// can we use the index?
-		if ($indexFolder->nodeExists('v0.6.0')) {
+		if ($indexFolder->nodeExists('v0.8.0')) {
 			// correct index present
 			$this->index = Lucene::open($localPath);
 		} else {
 			$this->logger->info( 'recreating outdated lucene index' );
 			$indexFolder->delete();
 			$this->index = Lucene::create($localPath);
-			$indexFolder->newFile('v0.6.0');
+			$indexFolder->newFile('v0.8.0');
 		}
 
 	}
