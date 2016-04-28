@@ -250,7 +250,7 @@ class Indexer {
 			$datadirectory = \OC::$server->getConfig()->getSystemValue('datadirectory');
 			$prefix = preg_replace( "!^" . $datadirectory . "!", "", $full_home_dir ) . '/files/';
 			$path = preg_replace( '!'.$prefix.'!', "", $file->getPath());
-			$canReadIndiv = Share::getUsersSharingFile($path, $user, true, false);
+			$canReadIndiv = Share::getUsersSharingFile($path, $user->getUID(), true, false);
 			$concatenated = '_' . implode('_', $canReadIndiv['users']) . '_';
 			$doc->addField(Document\Field::Text('can_read', $concatenated, 'UTF-8'));
 
