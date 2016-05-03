@@ -242,14 +242,11 @@ class Indexer {
 			// FIXME: this next four lines seem a bit awkward. The goal is to get the "path" as 
 			// getUsersSharingFile() method expects it, which is relative to the user's dir 
 			// of files, without assuming the data directory is the same as the user name.
+			$path = preg_replace( '!files/!', "", $file->getInternalPath());
 			$user = \OC::$server->getUserSession()->getUser();
 			if (!$user) {
 				return false;
 			}
-			$full_home_dir = $user->getHome();
-			$datadirectory = \OC::$server->getConfig()->getSystemValue('datadirectory');
-			$prefix = preg_replace( "!^" . $datadirectory . "!", "", $full_home_dir ) . '/files/';
-			$path = preg_replace( '!'.$prefix.'!', "", $file->getPath());
 			$canReadIndiv = Share::getUsersSharingFile($path, $user->getUID(), true, false);
 			$concatenated = '_' . implode('_', $canReadIndiv['users']) . '_';
 			$doc->addField(Document\Field::Text('can_read', $concatenated, 'UTF-8'));
