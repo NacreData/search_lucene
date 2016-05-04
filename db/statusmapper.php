@@ -140,46 +140,28 @@ class StatusMapper extends Mapper {
 	 * @return array
 	 */
 	public function getUnindexed() {
-		$files = array();
-		//TODO use server api for mounts & root
-		$absoluteRoot = Filesystem::getView()->getAbsolutePath('/');
-		$mounts = Filesystem::getMountPoints($absoluteRoot);
-		$mount = Filesystem::getMountPoint($absoluteRoot);
-		if (!in_array($mount, $mounts)) {
-			$mounts[] = $mount;
+		$user = \OC::$server->getUserSession()->getUser();
+		if (!$user) {
+			return false;
 		}
+		$full_home_dir = $user->getHome() . '/'; 
+
+		$files = array();
 
 		$query = $this->db->prepareQuery('
-			SELECT `*PREFIX*filecache`.`fileid`
+			SELECT `*PREFIX*filecache`.`fileid`, `*PREFIX*filecache`.`path`
 			FROM `*PREFIX*filecache`
 			LEFT JOIN `' . $this->tableName . '`
 			ON `*PREFIX*filecache`.`fileid` = `' . $this->tableName . '`.`fileid`
-			WHERE `storage` = ?
-			AND ( `status` IS NULL OR `status` = ? )
+			WHERE ( `status` IS NULL OR `status` = ? )
 			AND `path` LIKE \'files/%\'
 		');
+		$result = $query->execute([Status::STATUS_NEW]);
+		while ($row = $result->fetchRow()) {
+			if (file_exists($full_home_dir . $row['path'])
+				&& is_file($full_home_dir . $row['path'])) {
 
-		foreach ($mounts as $mount) {
-			if (is_string($mount)) {
-				$storage = Filesystem::getStorage($mount);
-			} else if ($mount instanceof Mount) {
-				$storage = $mount->getStorage();
-			} else {
-				$storage = null;
-				$this->logger->
-					debug( 'expected string or instance of \OC\Files\Mount\Mount got ' . json_encode($mount) );
-			}
-			
-			//only index local files for now
-			if ($storage && $storage->isLocal()) {
-				$cache = $storage->getCache();
-				$numericId = $cache->getNumericStorageId();
-
-				$result = $query->execute(array($numericId, Status::STATUS_NEW));
-					
-				while ($row = $result->fetchRow()) {
-					$files[] = $row['fileid'];
-				}
+				$files[] = $row['fileid'];
 			}
 		}
 		return $files;
